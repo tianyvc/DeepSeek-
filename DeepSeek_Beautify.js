@@ -247,13 +247,25 @@ body.dark .ds-markdown pre{background:rgba(10,12,18,.96)!important}
 .ds-markdown [class*="mermaid"]{background:none!important;padding:0!important;border:none!important}
 .ds-think-content .ds-markdown{font-size:13.5px;line-height:1.65;opacity:.86}
 
-/* ---------- 代码块折叠条 ---------- */
+/* ---------- 代码块折叠条 & 底部直角修复 ---------- */
 .md-code-block .dse-code-fold{display:flex;align-items:center;justify-content:center;gap:4px;
   padding:6px;cursor:pointer;font-size:12px;user-select:none;
-  border-top:1px solid rgba(0,0,0,.07);transition:opacity .2s}
+  border-top:1px solid rgba(0,0,0,.07);transition:opacity .2s;
+  /* 新增：让折叠条底部也变成圆角 */
+  border-bottom-left-radius:12px;border-bottom-right-radius:12px}
 .md-code-block .dse-code-fold:hover{opacity:.75}
 .md-code-block .dse-code-fold svg{transition:transform .2s}
 .md-code-block.dse-code-expanded .dse-code-fold svg{transform:rotate(180deg)}
+
+/* 新增：强制外层容器圆角裁切，防止内部深色背景溢出成直角 */
+.md-code-block{border-radius:12px!important;overflow:hidden!important}
+
+/* 新增：修复短代码块的直角，消除导致露底的底部 margin */
+.md-code-block pre{
+  margin-bottom:0!important;
+  border-bottom-left-radius:12px!important;
+  border-bottom-right-radius:12px!important
+}
 
 /* ---------- 消息导航 ---------- */
 #dse-nav{position:fixed;right:6px;top:50%;transform:translateY(-50%);z-index:99990;
