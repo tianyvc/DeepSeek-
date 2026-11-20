@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         豆包网页美化【单层气泡｜低饱和蓝用户气泡】
+// @name         豆包网页美化
 // @namespace    http://tampermonkey.net/
-// @version      11.0.0
-// @description  单层气泡无多余磨砂，用户气泡低饱和蓝色，AI气泡浅色磨砂，区分清晰
+// @version      11.3.0
+// @description  单层气泡无多余磨砂，用户气泡低饱和蓝色，AI气泡浅色磨砂，移除新对话问候文字滑动黑块动画
 // @author       You
 // @match        *://*.doubao.com/*
 // @grant        none
@@ -23,6 +23,7 @@
     };
 
     let objectUrl = null;
+    let observer = null;
 
     async function fetchRandomBgAsObjectUrl() {
         try {
@@ -74,7 +75,12 @@ body,
 #root > div > div > div,
 div[role="main"],
 main,
-div[class*="layout"] {
+div[class*="layout"],
+div[class*="welcome"],
+div[class*="empty-chat"],
+div[class*="home-page"],
+div[class*="starter"]
+{
     background: transparent !important;
     background-color: transparent !important;
 }
@@ -222,8 +228,10 @@ html[data-theme="dark"] code:not(pre code) {
 }
 
 /* ========== 骨架屏黑块修复 ========== */
-[class*="skeleton"] {
+[class*="skeleton"],
+[class*="skeleton-item"] {
     background: rgba(40,44,52,0.4) !important;
+    background-color: rgba(40,44,52,0.4) !important;
 }
 
 /* ========== 滚动条 ========== */
@@ -238,6 +246,16 @@ html[data-theme="dark"] code:not(pre code) {
     background: rgba(255,255,255,0.25) !important;
     border-radius: 4px;
 }
+
+/* ========== 【重点】移除问候文字黑色滑动遮罩伪元素，删除动画 ========== */
+.greeting-text-Q0pGud::after {
+    display: none !important;
+    content: none !important;
+}
+[class*="greeting-text"]::after {
+    display: none !important;
+    content: none !important;
+}
         `;
         document.head.appendChild(style);
 
@@ -248,116 +266,85 @@ html[data-theme="dark"] code:not(pre code) {
         }
     }
 
-    function clearDarkBackgrounds(root) {
+    function clearAllBg(root) {
         if (!root || !root.style) return;
-
-        const darkBgList = [
-            'rgb(20, 22, 28)',
-            'rgb(24, 28, 36)',
-            'rgb(30, 34, 42)',
-            'rgb(32, 33, 36)',
-            'rgb(35, 38, 45)',
-            'rgb(38, 42, 50)',
-            '#14161c',
-            '#181c24',
-            '#1e222a',
-            '#202124',
-            '#23262d',
-            '#262a32',
-            '#111827',
-            '#0f172a'
-        ];
-
-        const bg = root.style.backgroundColor || '';
-        if (darkBgList.includes(bg.trim())) {
-            root.style.backgroundColor = '';
-            root.style.background = '';
-            root.style.backgroundImage = 'none';
-            root.style.backdropFilter = 'none';
-            root.style.webkitBackdropFilter = 'none';
-        }
-
+        root.style.backgroundColor = '';
+        root.style.background = '';
+        root.style.backgroundImage = 'none';
+        root.style.backdropFilter = 'none';
+        root.style.webkitBackdropFilter = 'none';
         if (root.children && root.children.length) {
             for (let i = 0; i < root.children.length; i++) {
-                clearDarkBackgrounds(root.children[i]);
+                clearAllBg(root.children[i]);
             }
         }
     }
 
     function applyUserSingleBubble() {
         document.querySelectorAll('[data-testid="send_message"]').forEach(item => {
-            item.style.backgroundColor = '';
-            item.style.background = '';
-            item.style.backgroundImage = 'none';
-            item.style.backdropFilter = 'none';
-            item.style.webkitBackdropFilter = 'none';
-            item.style.boxShadow = 'none';
-            item.style.border = 'none';
-
+            clearAllBg(item);
             if (item.children && item.children.length) {
-                item.children[0].style.backgroundColor = '';
-                item.children[0].style.background = '';
-                item.children[0].style.backgroundImage = 'none';
-                item.children[0].style.backdropFilter = 'none';
-                item.children[0].style.webkitBackdropFilter = 'none';
-                item.children[0].style.boxShadow = 'none';
-                item.children[0].style.border = 'none';
+                clearAllBg(item.children[0]);
             }
-
             const inner = item.querySelector('div');
             if (inner) {
                 inner.classList.add('doubao-user-single-bubble');
-                clearDarkBackgrounds(inner);
+                clearAllBg(inner);
             }
         });
     }
 
     function applyAISingleBubble() {
         document.querySelectorAll('[data-testid="receive_message"]').forEach(item => {
-            item.style.backgroundColor = '';
-            item.style.background = '';
-            item.style.backdropFilter = 'none';
-            item.style.webkitBackdropFilter = 'none';
-
+            clearAllBg(item);
             if (item.children && item.children.length) {
-                item.children[0].style.backgroundColor = '';
-                item.children[0].style.background = '';
-                item.children[0].style.backdropFilter = 'none';
-                item.children[0].style.webkitBackdropFilter = 'none';
+                clearAllBg(item.children[0]);
             }
-
             const inner = item.querySelector('div');
             if (inner) {
                 inner.classList.add('doubao-ai-single-bubble');
-                clearDarkBackgrounds(inner);
+                clearAllBg(inner);
             }
         });
     }
 
     function clearKeyDarkContainers() {
         const nodes = document.querySelectorAll(
-            'header, aside, div[data-testid*="header"], div[data-testid*="sidebar"], div[data-testid="message-list"], div[data-testid="message-container"]'
+            'header, aside, div[data-testid*="header"], div[data-testid*="sidebar"], div[data-testid="message-list"], div[data-testid="message-container"], div[class*="welcome"], div[class*="empty-chat"], div[class*="home-page"]'
         );
-        nodes.forEach(el => {
-            el.style.backgroundColor = '';
-            el.style.background = '';
-            el.style.backgroundImage = 'none';
-            el.style.backdropFilter = 'none';
-            el.style.webkitBackdropFilter = 'none';
+        nodes.forEach(el => clearAllBg(el));
+    }
+
+    function runFix() {
+        applyUserSingleBubble();
+        applyAISingleBubble();
+        clearKeyDarkContainers();
+    }
+
+    function startObserver() {
+        if (observer) return;
+        observer = new MutationObserver((mutations) => {
+            for (const m of mutations) {
+                if (m.addedNodes.length) {
+                    requestAnimationFrame(runFix);
+                }
+            }
+        });
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
         });
     }
 
     function startFixLoop() {
-        setInterval(() => {
-            applyUserSingleBubble();
-            applyAISingleBubble();
-            clearKeyDarkContainers();
-        }, CONFIG.pollInterval);
+        setInterval(runFix, CONFIG.pollInterval);
     }
 
     async function run() {
         injectBaseStyle();
+        startObserver();
         startFixLoop();
+        runFix();
 
         const bgUrl = await fetchRandomBgAsObjectUrl();
         const bgDom = document.querySelector('#doubao-custom-bg');
